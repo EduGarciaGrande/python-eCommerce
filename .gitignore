@@ -115,3 +115,8 @@ ENV/
 
 # mypy
 .mypy_cache/
+/tcl
+/.idea
+/Include
+/Lib
+/Scripts

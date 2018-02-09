@@ -1,5 +1,5 @@
 from django.db import models
-from .utils import unique_slug_generator
+from ecommerce.utils import unique_slug_generator
 from django.db.models.signals import pre_save
 from django.urls import reverse
 from django.db.models import Q
@@ -28,10 +28,12 @@ class ProductQuerySet(models.query.QuerySet):
         return self.filter(featured=True, active=True)
 
     def search(self, query):
-        lookups = (Q(title__icontains=query) |
-                        Q(description__icontains=query) |
-                        Q(price__icontains=query) |
-                        Q(tag__title__icontains=query))
+        lookups = (
+                Q(title__icontains=query) |
+                Q(description__icontains=query) |
+                Q(price__icontains=query) |
+                Q(tag__title__icontains=query)
+        )
         # Q(tag__name__icontains=query)
         return self.filter(lookups).distinct()
 
@@ -76,7 +78,7 @@ class Product(models.Model):
 
     def __str__(self):
         return self.title
-    
+
     @property
     def name(self):
         return self.title
