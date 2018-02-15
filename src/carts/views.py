@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.http import JsonResponse
 
 from products.models import Product
 from addresses.models import Address
@@ -9,6 +10,16 @@ from billing.models import BillingProfile
 from .models import Cart
 
 
+def cart_detail_api_view(request):
+    cart_obj, new_obj = Cart.objects.new_or_get(request)
+    products = [{"name": x.name, "price": x.price} for x in cart_obj.products.all()]
+    # products_list = []
+    # for x in cart_obj.products.all():
+    #     products_list.append({"name": x.name, "price": x.price})
+    cart_data = {"products": products, "subtotal": cart_obj.subtotal, "total": cart_obj.total}
+    return JsonResponse(cart_data)
+
+
 def cart_home(request):
     cart_obj, new_obj = Cart.objects.new_or_get(request)
     return render(request, "carts/home.html", {"cart": cart_obj})
@@ -16,6 +27,7 @@ def cart_home(request):
 
 def cart_update(request):
     product_id = request.POST.get('product_id')
+
     if product_id is not None:
         try:
             product_obj = Product.objects.get(id=product_id)
@@ -27,10 +39,20 @@ def cart_update(request):
 
         if product_obj in cart_obj.products.all():
             cart_obj.products.remove(product_obj)
+            added = False
         else:
             cart_obj.products.add(product_obj)
+            added = True
 
         request.session['cart_items'] = cart_obj.products.count()
+        if request.is_ajax():
+            print("Ajax request")
+            json_data = {
+                "added": added,
+                "removed": not added,
+                "cartItemCount": cart_obj.products.count()
+            }
+            return JsonResponse(json_data)
     return redirect("cart:home")
 
 
