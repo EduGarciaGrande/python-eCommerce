@@ -1,7 +1,10 @@
 from django import forms
-from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import ReadOnlyPasswordHashField
+from django.contrib import admin
+from django.contrib.auth.models import Group
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-User = get_user_model()
+from .models import User
 
 
 class GuestForm(forms.Form):
@@ -9,41 +12,107 @@ class GuestForm(forms.Form):
 
 
 class LoginForm(forms.Form):
-    username = forms.CharField()
+    email = forms.EmailField(label='Email')
     password = forms.CharField(widget=forms.PasswordInput)
 
 
-class RegisterForm(forms.Form):
-    username = forms.CharField()
-    email = forms.EmailField()
-    password = forms.CharField(widget=forms.PasswordInput)
-    password2 = forms.CharField(label='Confirm password:', widget=forms.PasswordInput)
+class RegisterForm(forms.ModelForm):
+    """A form for creating new users. Includes all the required
+    fields, plus a repeated password."""
+    password1 = forms.CharField(label='Password', widget=forms.PasswordInput)
+    password2 = forms.CharField(label='Password confirmation', widget=forms.PasswordInput)
 
-    def clean_username(self):
-        username = self.cleaned_data.get('username')
-        qs = User.objects.filter(username=username)
+    class Meta:
+        model = User
+        fields = ('email', )
 
-        if qs.exists():
-            raise forms.ValidationError("Username is already used")
+    def clean_password2(self):
+        # Check that the two password entries match
+        password1 = self.cleaned_data.get("password1")
+        password2 = self.cleaned_data.get("password2")
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError("Passwords don't match")
+        return password2
 
-        return username
+    def save(self, commit=True):
+        # Save the provided password in hashed format
+        user = super(RegisterForm, self).save(commit=False)
+        user.set_password(self.cleaned_data["password1"])
+        # user.active = False
+        if commit:
+            user.save()
+        return user
 
-    def clean_email(self):
-        email = self.cleaned_data.get('email')
-        qs = User.objects.filter(email=email)
 
-        if qs.exists():
-            raise forms.ValidationError("Username is already used")
+class UserAdminCreationForm(forms.ModelForm):
+    """A form for creating new users. Includes all the required
+    fields, plus a repeated password."""
+    password1 = forms.CharField(label='Password', widget=forms.PasswordInput)
+    password2 = forms.CharField(label='Password confirmation', widget=forms.PasswordInput)
 
-        return email
+    class Meta:
+        model = User
+        fields = ('email', )
 
-    def clean(self):
-        data = self.cleaned_data
-        password = self.cleaned_data.get('password')
-        password2 = self.cleaned_data.get('password2')
+    def clean_password2(self):
+        # Check that the two password entries match
+        password1 = self.cleaned_data.get("password1")
+        password2 = self.cleaned_data.get("password2")
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError("Passwords don't match")
+        return password2
 
-        if password != password2:
-            raise forms.ValidationError("Passwords must match")
+    def save(self, commit=True):
+        # Save the provided password in hashed format
+        user = super(UserAdminCreationForm, self).save(commit=False)
+        user.set_password(self.cleaned_data["password1"])
+        if commit:
+            user.save()
+        return user
 
-        return data
+
+class UserAdminChangeForm(forms.ModelForm):
+    """A form for updating users. Includes all the fields on
+    the user, but replaces the password field with admin's
+    password hash display field.
+    """
+    password = ReadOnlyPasswordHashField()
+
+    class Meta:
+        model = User
+        fields = ('email', 'password', 'active', 'admin')
+
+    def clean_password(self):
+        # Regardless of what the user provides, return the initial value.
+        # This is done here, rather than on the field, because the
+        # field does not have access to the initial value
+        return self.initial["password"]
+
+
+class UserAdmin(BaseUserAdmin):
+    # The forms to add and change user instances
+    form = UserAdminChangeForm
+    add_form = UserAdminCreationForm
+
+    # The fields to be used in displaying the User model.
+    # These override the definitions on the base UserAdmin
+    # that reference specific fields on auth.User.
+    list_display = ('email', 'admin')
+    list_filter = ('admin',)
+    fieldsets = (
+        (None, {'fields': ('email', 'password')}),
+        ('Personal info', {'fields': ()}),
+        ('Permissions', {'fields': ('admin',)}),
+    )
+    # add_fieldsets is not a standard ModelAdmin attribute. UserAdmin
+    # overrides get_fieldsets to use this attribute when creating a user.
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('email', 'password1', 'password2')}
+        ),
+    )
+    search_fields = ('email',)
+    ordering = ('email',)
+    filter_horizontal = ()
 
