@@ -56,6 +56,10 @@ AUTH_USER_MODEL = 'accounts.User'
 FORCE_SESSION_TO_ONE = False
 FORCE_INACTIVE_USER_ENDSESSION = False
 
+# Stripe integration -> the  API keys were generated using a fake email
+STRIPE_SECRET_KEY = "sk_test_BKDQSDGB04CKeHQg8FF7Qe4u"
+STRIPE_PUB_KEY = 'pk_test_Ieryuhr7WQ5oPxm9hr0ECJpb'
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

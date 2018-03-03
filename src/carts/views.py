@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 
@@ -8,6 +9,11 @@ from orders.models import Order
 from accounts.forms import LoginForm, GuestForm
 from billing.models import BillingProfile
 from .models import Cart
+
+import stripe
+STRIPE_SECRET_KEY = getattr(settings, "STRIPE_SECRET_KEY", "sk_test_BKDQSDGB04CKeHQg8FF7Qe4u")
+STRIPE_PUB_KEY = getattr(settings, "STRIPE_PUB_KEY", "pk_test_Ieryuhr7WQ5oPxm9hr0ECJpb")
+stripe.api_key = STRIPE_SECRET_KEY
 
 
 def cart_detail_api_view(request):
@@ -76,6 +82,7 @@ def checkout_home(request):
 
     billing_profile, billing_profile_created = BillingProfile.objects.new_or_get(request)
     address_qs = None
+    has_card = False
 
     if billing_profile is not None:
         if request.user.is_authenticated:
@@ -91,6 +98,8 @@ def checkout_home(request):
         if shipping_address_id or billing_address_id:
             order_obj.save()
 
+        has_card = billing_profile.has_card
+
     if request.method == "POST":
         "some check that order is done"
         is_prepared = order_obj.check_done()
@@ -99,8 +108,12 @@ def checkout_home(request):
 
             if did_charge:
                 order_obj.mark_paid()
-                del request.session['cart_id']
                 request.session['cart_items'] = 0
+                del request.session['cart_id']
+
+                if not billing_profile.user:
+                    billing_profile.set_cards_inactive()
+
                 return redirect("cart:success")
             else:
                 print(crg_msg)
@@ -113,6 +126,8 @@ def checkout_home(request):
         'guest_form': guest_form,
         'address_form': address_form,
         'address_qs': address_qs,
+        'has_card': has_card,
+        'publish_key': STRIPE_PUB_KEY,
     }
 
     return render(request, 'carts/checkout.html', context)
