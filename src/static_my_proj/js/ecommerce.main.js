@@ -1,5 +1,5 @@
 $(document).ready(function () {
-    var stripeFormModule = $(".stripe-payment-form"),
+     var stripeFormModule = $(".stripe-payment-form"),
             stripeModuleToken = stripeFormModule.attr('data-token'),
             stripeModuleNextUrl = stripeFormModule.attr('data-next-url'),
             stripeModuleBtnTitle = stripeFormModule.attr('data-btn-title') || "Add card",
@@ -66,21 +66,75 @@ $(document).ready(function () {
             });
 
             // Handle form submission.
-            var form = document.getElementById('payment-form');
-            form.addEventListener('submit', function (event) {
+            // var form = document.getElementById('payment-form');
+            // form.addEventListener('submit', function (event) {
+            //     event.preventDefault();
+            //
+            //     var errorHtml = "<i class='fa fa-warning'></i>An error occurred",
+            //         errorClasses = "btn btn-danger disabled my-3",
+            //         loadingHtml = "<i class='fa fa-spin fa-spinner'></i>Loading...",
+            //         loadingClasses = "btn btn-success disabled my-3",
+            //         loadingTime = 1500;
+            //
+            //     stripe.createToken(card).then(function (result) {
+            //         if (result.error) {
+            //             // Inform the user if there was an error.
+            //             var errorElement = document.getElementById('card-errors');
+            //             errorElement.textContent = result.error.message;
+            //         } else {
+            //             // Send the token to your server.
+            //             stripeTokenHandler(nextUrl, result.token);
+            //         }
+            //     });
+            // });
+
+            var form = $('#payment-form');
+            var btnLoad = form.find('.btn-load'),
+                btnLoadDefaultHtml = btnLoad.html(),
+                btnLoadDefaultClasses = btnLoad.attr('class');
+
+            form.on('submit', function (event) {
                 event.preventDefault();
+
+                btnLoad.blur();
+
+                var errorHtml = "<i class='fa fa-warning'></i>An error occurred",
+                    errorClasses = "btn btn-danger disabled my-3",
+                    loadingHtml = "<i class='fa fa-spin fa-spinner'></i>Loading...",
+                    loadingClasses = "btn btn-success disabled my-3",
+                    loadingTime = 1500, currentTimeout;
 
                 stripe.createToken(card).then(function (result) {
                     if (result.error) {
                         // Inform the user if there was an error.
-                        var errorElement = document.getElementById('card-errors');
+                        var errorElement = $('#card-errors');
                         errorElement.textContent = result.error.message;
+                        currentTimeout = displayBtnStatus(btnLoad, errorHtml, errorClasses, 1000, currentTimeout);
                     } else {
                         // Send the token to your server.
+                        currentTimeout = displayBtnStatus(btnLoad, loadingHtml, loadingClasses, 1000, currentTimeout);
                         stripeTokenHandler(nextUrl, result.token);
                     }
                 });
             });
+
+            function displayBtnStatus(element, newHtml, newClasses, loadTime, timeout){
+                //var defaultHtml = element.html(), defaultClasses = element.attr('class');
+
+                if (!loadTime){
+                    loadTime = 1500;
+                }
+
+                element.html(newHtml);
+                element.removeClass(btnLoadDefaultClasses);
+                element.addClass(newClasses);
+
+                return setTimeout(function () {
+                    element.html(btnLoadDefaultHtml);
+                    element.removeClass(newClasses);
+                    element.addClass(btnLoadDefaultClasses);
+                }, loadTime);
+            }
 
             function redirectToNext(nextPath, timeoffset) {
                 if(nextPath){
@@ -115,10 +169,16 @@ $(document).ready(function () {
                             alert(successMsg);
                         }
 
+                        btnLoad.html(btnLoadDefaultHtml);
+                        btnLoad.attr('class', btnLoadDefaultClasses);
+
                         redirectToNext(nextUrl, 1500);
                     },
                     error: function (error) {
                         console.log(error);
+                        $.alert({title: "An error occurred", content: "Please try adding your card again"});
+                        btnLoad.html(btnLoadDefaultHtml);
+                        btnLoad.attr('class', btnLoadDefaultClasses);
                     }
                 });
             }
