@@ -43,11 +43,12 @@ INSTALLED_APPS = [
     'addresses',
     'analytics',
     'billing',
+    'carts',
+    'marketing',
+    'orders',
     'products',
     'search',
     'tags',
-    'carts',
-    'orders',
 ]
 
 # changes the built-in user model to ours
@@ -55,6 +56,11 @@ AUTH_USER_MODEL = 'accounts.User'
 
 FORCE_SESSION_TO_ONE = False
 FORCE_INACTIVE_USER_ENDSESSION = False
+
+MAILCHIMP_API_KEY = "f8fbc96d99b261d805398f6925dafe43-us12"
+MAILCHIMP_DATA_CENTER = "us12"
+MAILCHIMP_EMAIL_LIST_ID = "d669041926"
+
 
 # Stripe integration -> the  API keys were generated using a fake email
 STRIPE_SECRET_KEY = "sk_test_BKDQSDGB04CKeHQg8FF7Qe4u"
