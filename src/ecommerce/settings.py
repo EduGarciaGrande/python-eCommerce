@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 
 import os
+import yaml
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -57,14 +58,16 @@ AUTH_USER_MODEL = 'accounts.User'
 FORCE_SESSION_TO_ONE = False
 FORCE_INACTIVE_USER_ENDSESSION = False
 
-MAILCHIMP_API_KEY = "f8fbc96d99b261d805398f6925dafe43-us12"
-MAILCHIMP_DATA_CENTER = "us12"
-MAILCHIMP_EMAIL_LIST_ID = "d669041926"
+# Load variables from config file
+with open("ecommerce/api-config/api-keys.yml", 'r') as ymlfile:
+    cfg = yaml.load(ymlfile)
 
+MAILCHIMP_API_KEY = cfg.get('auth').get('MAILCHIMP_API_KEY')
+MAILCHIMP_DATA_CENTER = cfg.get('auth').get('MAILCHIMP_DATA_CENTER')
+MAILCHIMP_EMAIL_LIST_ID = cfg.get('auth').get('MAILCHIMP_EMAIL_LIST_ID')
 
-# Stripe integration -> the  API keys were generated using a fake email
-STRIPE_SECRET_KEY = "sk_test_BKDQSDGB04CKeHQg8FF7Qe4u"
-STRIPE_PUB_KEY = 'pk_test_Ieryuhr7WQ5oPxm9hr0ECJpb'
+STRIPE_SECRET_KEY = cfg.get('auth').get('STRIPE_SECRET_KEY')
+STRIPE_PUB_KEY = cfg.get('auth').get('STRIPE_PUB_KEY')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

@@ -13,7 +13,10 @@ pip-selfcheck.json
 
 # Django related 
 src/ecommerce/settings/local.py
-static-cdn/  # any collected static files 
+static-cdn/  # any collected static files
+
+# Config file for API keys
+src/ecommerce/api-config
 
 
 # Byte-compiled / optimized / DLL files
