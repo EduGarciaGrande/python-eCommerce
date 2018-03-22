@@ -14,19 +14,31 @@ import os
 import yaml
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
+# Load variables from config file
+KEYS_FILE = os.path.join(BASE_DIR, "ecommerce", "keys", "keys.yml")
+with open(KEYS_FILE, 'r') as ymlfile:
+    cfg = yaml.load(ymlfile)
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '315=rcloj-4k(s!0d$ch+j+(&7&lszis0xup^ty7p7=^_e+fy2'
+SECRET_KEY = cfg.get('django').get('SECRET_KEY')
+
+MAILCHIMP_API_KEY = cfg.get('auth').get('MAILCHIMP_API_KEY')
+MAILCHIMP_DATA_CENTER = cfg.get('auth').get('MAILCHIMP_DATA_CENTER')
+MAILCHIMP_EMAIL_LIST_ID = cfg.get('auth').get('MAILCHIMP_EMAIL_LIST_ID')
+
+STRIPE_SECRET_KEY = cfg.get('auth').get('STRIPE_SECRET_KEY')
+STRIPE_PUB_KEY = cfg.get('auth').get('STRIPE_PUB_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['.herokuapp.com']
 
 
 # Application definition
@@ -58,17 +70,6 @@ AUTH_USER_MODEL = 'accounts.User'
 FORCE_SESSION_TO_ONE = False
 FORCE_INACTIVE_USER_ENDSESSION = False
 
-# Load variables from config file
-with open("ecommerce/api-config/api-keys.yml", 'r') as ymlfile:
-    cfg = yaml.load(ymlfile)
-
-MAILCHIMP_API_KEY = cfg.get('auth').get('MAILCHIMP_API_KEY')
-MAILCHIMP_DATA_CENTER = cfg.get('auth').get('MAILCHIMP_DATA_CENTER')
-MAILCHIMP_EMAIL_LIST_ID = cfg.get('auth').get('MAILCHIMP_EMAIL_LIST_ID')
-
-STRIPE_SECRET_KEY = cfg.get('auth').get('STRIPE_SECRET_KEY')
-STRIPE_PUB_KEY = cfg.get('auth').get('STRIPE_PUB_KEY')
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -85,7 +86,7 @@ ROOT_URLCONF = 'ecommerce.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'templates/')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -158,3 +159,14 @@ STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR), "static-cdn", "static-root
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), "static-cdn", "media-root")
+
+# Let's encrypt ssl/tls https
+CORS_REPLACE_HTTPS_REFERER = True
+HOST_SCHEME = "https://"
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_SECONDS = 1000000
+SECURE_FRAME_DENY = True

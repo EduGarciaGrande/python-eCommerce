@@ -15,8 +15,8 @@ pip-selfcheck.json
 src/ecommerce/settings/local.py
 static-cdn/  # any collected static files
 
-# Config file for API keys
-src/ecommerce/api-config
+# Config file for keys
+src/ecommerce/keys/keys.yml
 
 
 # Byte-compiled / optimized / DLL files

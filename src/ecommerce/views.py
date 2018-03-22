@@ -4,14 +4,14 @@ from .forms import ContactForm
 
 
 def home_page(request):
-    print(request.session.get("first_name", "unknown"))
+    # print(request.session.get("first_name", "unknown"))
     context = {
         "title": "Hello world!!",
         "content": "Welcome to the homepage"
     }
 
     if request.user.is_authenticated:
-        context["premium_content"] = "YEAAHHHHHHH"
+        context["premium_content"] = "PREMIUM USER CONTENT "
 
     return render(request, "home_page.html", context)
 

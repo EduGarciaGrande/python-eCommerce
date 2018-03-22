@@ -1,0 +1,4 @@
+Django==2.0.1
+requests==2.18.4
+stripe==1.79.0
+PyYAML==3.12
