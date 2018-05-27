@@ -1,0 +1,11 @@
+django:
+        SECRET_KEY: "+v*)@fa5xig4*t+!^j(n^*j693(3-j#fecfhybpml$4$t_^$=1"
+auth:
+        MAILCHIMP_API_KEY: "7aa8893235df5a35ab4fe34d29229cf4-us12"
+        MAILCHIMP_DATA_CENTER: "us12"
+        MAILCHIMP_EMAIL_LIST_ID: "d669041926"
+
+
+        # Stripe integration -> the  API keys were generated using a fake email
+        STRIPE_SECRET_KEY: "sk_test_y7TCEJEqVNowDLHHGLdWkEvq"
+        STRIPE_PUB_KEY: 'pk_test_Ieryuhr7WQ5oPxm9hr0ECJpb'

@@ -67,6 +67,10 @@ INSTALLED_APPS = [
 # changes the built-in user model to ours
 AUTH_USER_MODEL = 'accounts.User'
 
+LOGIN_URL = '/login/'
+LOGIN_URL_REDIRECT = '/'
+LOGOUT_REDIRECT_URL = '/logout/'
+
 FORCE_SESSION_TO_ONE = False
 FORCE_INACTIVE_USER_ENDSESSION = False
 
