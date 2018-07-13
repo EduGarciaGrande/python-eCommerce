@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.contrib.auth.models import Group
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import User
+from .models import User, EmailActivation
 
 
 class GuestForm(forms.Form):
@@ -38,7 +38,11 @@ class RegisterForm(forms.ModelForm):
         # Save the provided password in hashed format
         user = super(RegisterForm, self).save(commit=False)
         user.set_password(self.cleaned_data["password1"])
-        # user.active = False
+
+        user.is_active = False      # Send confirmation email
+        # obj = EmailActivation.objects.create(user=user)
+        # obj.send_activation_email()
+
         if commit:
             user.save()
         return user
@@ -66,6 +70,7 @@ class UserAdminCreationForm(forms.ModelForm):
         # Save the provided password in hashed format
         user = super(UserAdminCreationForm, self).save(commit=False)
         user.set_password(self.cleaned_data["password1"])
+        user.is_active = False      # Send confirmation email
         if commit:
             user.save()
         return user
@@ -80,7 +85,7 @@ class UserAdminChangeForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ('email', 'password', 'active', 'admin')
+        fields = ('email', 'password', 'is_active', 'admin')
 
     def clean_password(self):
         # Regardless of what the user provides, return the initial value.

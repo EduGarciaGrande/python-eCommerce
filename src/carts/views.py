@@ -11,8 +11,8 @@ from billing.models import BillingProfile
 from .models import Cart
 
 import stripe
-STRIPE_SECRET_KEY = getattr(settings, "STRIPE_SECRET_KEY", "sk_test_BKDQSDGB04CKeHQg8FF7Qe4u")
-STRIPE_PUB_KEY = getattr(settings, "STRIPE_PUB_KEY", "pk_test_Ieryuhr7WQ5oPxm9hr0ECJpb")
+STRIPE_SECRET_KEY = getattr(settings, "STRIPE_SECRET_KEY")
+STRIPE_PUB_KEY = getattr(settings, "STRIPE_PUB_KEY")
 stripe.api_key = STRIPE_SECRET_KEY
 
 
