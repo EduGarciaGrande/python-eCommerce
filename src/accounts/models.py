@@ -1,6 +1,7 @@
 from datetime import timedelta
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
 from django.contrib.auth.models import (
     AbstractBaseUser, BaseUserManager
 )
@@ -111,6 +112,9 @@ class EmailActivationManager(models.Manager):
     def confirmable(self):
         return self.get_queryset().confirmable()
 
+    def email_exists(self, email):
+        return self.get_queryset().filter(Q(email=email) | Q(user__email=email)).filter(activated=False)
+
 
 class EmailActivation(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -170,7 +174,7 @@ class EmailActivation(models.Model):
                 txt_ = get_template("registration/emails/verify.txt").render(context)
                 html_ = get_template("registration/emails/verify.html").render(context)
                 subject = '1-Click Email Verification'
-                from_email='emailtesting@gmail.com'
+                from_email = 'emailtesting@gmail.com'
                 recipient_list = [
                     self.email
                 ]
