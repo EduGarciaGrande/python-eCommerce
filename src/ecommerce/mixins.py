@@ -10,7 +10,7 @@ class RequestFormAttachMixin(object):
 
 
 class NextUrlMixin(object):
-    defualt_next = "/"
+    default_next = "/"
 
     def get_next_url(self):
         request = self.request
@@ -21,4 +21,4 @@ class NextUrlMixin(object):
         if is_safe_url(redirect_path, request.get_host()):
             return redirect_path
 
-        return self.defualt_next
+        return self.default_next
