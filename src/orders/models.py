@@ -1,5 +1,6 @@
 import math
 
+from django.conf import settings
 from django.db import models
 from carts.models import Cart
 from django.db.models.signals import pre_save, post_save
@@ -8,6 +9,7 @@ from django.urls import reverse
 from ecommerce.utils import unique_order_id_generator
 from addresses.models import Address
 from billing.models import BillingProfile
+from products.models import Product
 
 
 ORDER_STATUS_CHOICES = (
@@ -89,20 +91,30 @@ class Order(models.Model):
         return new_total
 
     def check_done(self):
+        shipping_address_required = not self.cart.is_digital
+        shipping_done = False
+
+        if shipping_address_required and self.shipping_address:
+            shipping_done = True
+        elif shipping_address_required and not self.shipping_address:
+            shipping_done = False
+        else:
+            shipping_done = True
+
         billing_profile = self.billing_profile
         billing_address = self.billing_address
-        shipping_address = self.shipping_address
         total = self.total
 
-        if billing_profile and shipping_address and billing_address and total > 0:
+        if billing_profile and shipping_done and billing_address and total > 0:
             return True
 
         return False
 
     def mark_paid(self):
-        if self.check_done():
-            self.status = "paid"
-            self.save()
+        if self.status != 'paid':
+            if self.check_done():
+                self.status = "paid"
+                self.save()
 
         return self.status
 
@@ -143,3 +155,22 @@ def post_save_order(sender, instance, created, *args, **kwargs):
 
 
 post_save.connect(post_save_order, sender=Order)
+
+
+class ProductPurchaseManager(models.Model):
+    def all(self):
+        return self.get_queryset().filter(refunded=False)
+
+
+class ProductPurchase(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, blank=True, null=True, on_delete=models.CASCADE)
+    billing_profile = models.ForeignKey(BillingProfile, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    refunded = models.BooleanField(default=False)
+    updated = models.DateTimeField(auto_now=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    objects = ProductPurchaseManager()
+
+    def __str__(self):
+        return self.product.title
