@@ -110,11 +110,19 @@ class Order(models.Model):
 
         return False
 
+    def update_purchases(self):
+        for p in self.cart.products.all():
+            obj, created = ProductPurchase.objects.get_or_create(
+                order_id=self.order_id, product=p, billing_profile=self.billing_profile)
+
+        return ProductPurchase.objects.filter(order_id=self.order_id).count()
+
     def mark_paid(self):
         if self.status != 'paid':
             if self.check_done():
                 self.status = "paid"
                 self.save()
+                self.update_purchases()
 
         return self.status
 
@@ -148,22 +156,49 @@ post_save.connect(post_save_cart_total, sender=Cart)
 
 # This signal gets called twice: when the order is created and in update_total()
 def post_save_order(sender, instance, created, *args, **kwargs):
-    print('running...')
+
     if created:
-        print('updating... first')
         instance.update_total()
 
 
 post_save.connect(post_save_order, sender=Order)
 
 
-class ProductPurchaseManager(models.Model):
+class ProductPurchaseQuerySet(models.query.QuerySet):
+    def active(self):
+        return self.filter(refunded=False)
+
+    def digital(self):
+        return self.filter(product__is_digital=True)
+
+    def by_request(self, request):
+        billing_profile, created = BillingProfile.objects.new_or_get(request)
+        return self.filter(billing_profile=billing_profile)
+
+
+class ProductPurchaseManager(models.Manager):
+    def get_queryset(self):
+        return ProductPurchaseQuerySet(self.model, using=self._db)
+
     def all(self):
-        return self.get_queryset().filter(refunded=False)
+        return self.get_queryset().active()
+
+    def digital(self):
+        return self.get_queryset().active().digital()
+
+    def by_request(self, request):
+        return self.get_queryset().by_request(request)
+
+    def products_by_request(self, request):
+        qs = self.by_request(request).digital()
+        ids_ = [x.product.id for x in qs]
+        products_qs = Product.objects.filter(id__in=ids_).distinct()
+
+        return products_qs
 
 
 class ProductPurchase(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, blank=True, null=True, on_delete=models.CASCADE)
+    order_id = models.CharField(max_length=120)
     billing_profile = models.ForeignKey(BillingProfile, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     refunded = models.BooleanField(default=False)
