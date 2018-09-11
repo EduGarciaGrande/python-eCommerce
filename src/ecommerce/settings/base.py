@@ -164,6 +164,8 @@ STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR), "static-cdn", "static-root
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), "static-cdn", "media-root")
 
+PROTECTED_ROOT = os.path.join(os.path.dirname(BASE_DIR), "static-cdn", "protected-media")
+
 
 # Let's encrypt ssl/tls https
 CORS_REPLACE_HTTPS_REFERER = False
