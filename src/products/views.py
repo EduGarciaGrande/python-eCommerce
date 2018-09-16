@@ -1,11 +1,13 @@
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect
 from django.views.generic import ListView, DetailView, View
 from django.http import Http404, HttpResponse
 
-from carts.models import Cart
 from analytics.mixins import ObjectViewedMixin
+from carts.models import Cart
+from orders.models import ProductPurchase
 from .models import Product, ProductFile
 import os
 
@@ -14,18 +16,20 @@ from wsgiref.util import FileWrapper
 
 
 class ProductFeaturedListView(ListView):
-    queryset = Product.objects.all()
     template_name = 'products/list.html'
 
     def get_queryset(self, *args, **kwargs):
-        return Product.objects.featured()
+        request = self.request
+        return Product.objects.all().featured()
 
 
 class ProductFeaturedDetailView(ObjectViewedMixin, DetailView):
+    queryset = Product.objects.all().featured()
     template_name = 'products/featured-detail.html'
 
-    def get_queryset(self, *args, **kwargs):
-        return Product.objects.featured()
+    # def get_queryset(self, *args, **kwargs):
+    #     request = self.request
+    #     return Product.objects.featured()
 
 
 class ProductDetailSlugView(ObjectViewedMixin, DetailView):
@@ -39,6 +43,7 @@ class ProductDetailSlugView(ObjectViewedMixin, DetailView):
         return context
 
     def get_object(self, *args, **kwargs):
+        request = self.request
         slug = self.kwargs.get('slug')
 
         # instance = get_object_or_404(Product, slug=slug, active=True)
@@ -58,7 +63,7 @@ class ProductDetailSlugView(ObjectViewedMixin, DetailView):
 
 
 class ProductDownloadView(View):
-    def get(self, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         slug = kwargs.get('slug')
         pk = kwargs.get('pk')
 
@@ -68,6 +73,27 @@ class ProductDownloadView(View):
             raise Http404("Download Not Found")
 
         download_obj = downloads_qs.first()
+
+        # permission checks
+        can_download = False
+        user_ready = True
+        if download_obj.user_required:
+            if not request.user.is_authenticated:
+                user_ready = False
+
+        purchased_products = Product.objects.none()
+        if download_obj.free:
+            can_download = True
+            user_ready = True
+        else:
+            purchased_products = ProductPurchase.objects.products_by_request(request)
+            if download_obj.product in purchased_products:
+                can_download = True
+
+        if not can_download or not user_ready:
+            messages.error(request, "You do not have access to download this item")
+            return redirect(download_obj.get_default_url())
+
         file_root = settings.PROTECTED_ROOT
         filepath = download_obj.file.path
         final_filepath = os.path.join(file_root, filepath)
@@ -84,8 +110,6 @@ class ProductDownloadView(View):
             response['Content-Disposition'] = "attachment;filename=%s" % download_obj.name
             response['X-SendFile'] = str(download_obj.name)
             return response
-
-       # return redirect(download_obj.get_default_url())
 
 
 class UserProductHistoryView(LoginRequiredMixin, ListView):
