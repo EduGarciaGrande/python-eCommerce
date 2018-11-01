@@ -1,4 +1,4 @@
-Django==2.0.1
-requests==2.18.4
+django>=2.0.8
+requests>=2.20.0
 stripe==1.79.0
 PyYAML==3.12

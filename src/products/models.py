@@ -111,6 +111,7 @@ def upload_product_file_loc(instance, filename):
 
 class ProductFile(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    name = models.CharField(max_length=120, null=True, blank=True)
     file = models.FileField(upload_to=upload_product_file_loc,
                             storage=FileSystemStorage(location=settings.PROTECTED_ROOT))
     free = models.BooleanField(default=False)               # purchase required
@@ -119,12 +120,17 @@ class ProductFile(models.Model):
     def __str__(self):
         return str(self.file.name)
 
+    @property
+    def display_name(self):
+        og_name = get_filename(self.file.name)
+        if self.name:
+            return self.name
+
+        return og_name
+
     def get_default_url(self):
         return self.product.get_absolute_url()
 
     def get_download_url(self):
         return reverse("products:download", kwargs={"slug": self.product.slug, "pk": self.pk})
 
-    @property
-    def name(self):
-        return get_filename(self.file.name)
